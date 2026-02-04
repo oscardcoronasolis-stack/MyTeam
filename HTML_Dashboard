@@ -1,0 +1,14 @@
+<!-- ============================================
+     DASHBOARD - CONTENEDOR PRINCIPAL
+     ============================================ -->
+<div id="dashboardContainer" class="dashboard-container">
+  
+  <!-- Header con info del usuario -->
+  <?!= include('HTML_Header_Dashboard'); ?>
+  
+  <!-- Hero: Comisión del día -->
+  <?!= include('HTML_Hero_Comision'); ?>
+  
+  <!-- Aquí irán las demás secciones (Pantalla 2, 3, 4...) -->
+  
+</div>
