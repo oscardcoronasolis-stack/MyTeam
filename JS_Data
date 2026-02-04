@@ -1,0 +1,80 @@
+<script>
+/* ============================================
+   GESTIÓN DE DATOS
+   ============================================ */
+
+const AppData = {
+  
+  // Estado global
+  tiendas: [],
+  selectedTienda: null,
+  selectedDemo: null,
+  
+  // Cargar datos de tiendas
+  async loadTiendas() {
+    Utils.show('loadingMessage');
+    Utils.hide('filtersSection');
+    
+    try {
+      const data = await new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .getTiendasData();
+      });
+      
+      this.tiendas = data;
+      Utils.log('Tiendas cargadas', { total: data.length });
+      
+      Utils.hide('loadingMessage');
+      Utils.show('filtersSection');
+      
+      return data;
+      
+    } catch (error) {
+      Utils.log('Error cargando tiendas', error);
+      Utils.showError('Error al cargar datos: ' + error.message);
+      throw error;
+    }
+  },
+  
+  // Filtrar tiendas
+  filterTiendas(filters = {}) {
+    let result = this.tiendas;
+    
+    if (filters.region) {
+      result = result.filter(t => t.region === filters.region);
+    }
+    
+    if (filters.zona) {
+      result = result.filter(t => t.zona === filters.zona);
+    }
+    
+    if (filters.searchTerm) {
+      const term = Utils.normalize(filters.searchTerm);
+      result = result.filter(t => 
+        Utils.normalize(t.tienda).includes(term)
+      );
+    }
+    
+    return result;
+  },
+  
+  // Obtener datos según demo seleccionado
+  getDemoData(tienda, demo) {
+    if (!tienda || !demo) return null;
+    
+    const fotoKey = `foto${demo}`;
+    const nombreKey = `nombre${demo}`;
+    
+    return {
+      foto: tienda[fotoKey] || '',
+      nombre: tienda[nombreKey] || '',
+      tienda: tienda.tienda,
+      region: tienda.region,
+      zona: tienda.zona,
+      demo: demo
+    };
+  }
+};
+</script>
