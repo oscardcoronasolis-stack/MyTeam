@@ -1,0 +1,156 @@
+<script>
+/* ============================================
+   DASHBOARD - GESTIÓN DE DATOS DE BIGQUERY
+   ============================================ */
+
+const DashboardData = {
+  
+  // Cache de datos
+  userData: null,
+  ventasData: null,
+  tiendaId: null,
+  
+  // Inicializar
+  async init() {
+    Utils.log('Inicializando datos del dashboard');
+    
+    try {
+      // Obtener datos del usuario desde sessionStorage
+      this.userData = JSON.parse(sessionStorage.getItem('userData'));
+      
+      if (!this.userData) {
+        throw new Error('No hay datos de usuario. Redirigiendo al login...');
+      }
+      
+      // Obtener el ID de la tienda desde el sheet original
+      await this.getTiendaId();
+      
+      // Cargar datos de ventas
+      await this.loadVentasAcumulado();
+      
+      Utils.log('Datos cargados exitosamente', {
+        tiendaId: this.tiendaId,
+        userData: this.userData
+      });
+      
+      return true;
+      
+    } catch (error) {
+      Utils.log('Error al inicializar datos', error);
+      Utils.showError('Error al cargar datos: ' + error.message);
+      throw error;
+    }
+  },
+  
+  // Obtener ID de tienda (Columna A del Sheet)
+  async getTiendaId() {
+    Utils.log('Obteniendo ID de tienda para: ' + this.userData.tienda);
+    
+    try {
+      const tiendas = await new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .getTiendasData();
+      });
+      
+      // Buscar la tienda seleccionada
+      const tiendaInfo = tiendas.find(t => t.tienda === this.userData.tienda);
+      
+      if (!tiendaInfo) {
+        throw new Error('No se encontró la tienda seleccionada');
+      }
+      
+      // El ID está en la primera posición (necesitamos agregarlo al Sheet)
+      // Por ahora, lo obtendremos del backend
+      const id = await new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .getTiendaId(this.userData.tienda);
+      });
+      
+      this.tiendaId = id;
+      Utils.log('ID de tienda obtenido: ' + this.tiendaId);
+      
+    } catch (error) {
+      Utils.log('Error al obtener ID de tienda', error);
+      throw error;
+    }
+  },
+  
+  // Cargar datos de ventas acumuladas
+  async loadVentasAcumulado() {
+    Utils.log('Cargando ventas acumuladas para tienda: ' + this.tiendaId);
+    
+    try {
+      const data = await new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .consultarVentasAcumuladas(this.tiendaId);
+      });
+      
+      if (!data) {
+        throw new Error('No se encontraron datos para esta tienda');
+      }
+      
+      this.ventasData = data;
+      Utils.log('Datos de ventas cargados', data);
+      
+      return data;
+      
+    } catch (error) {
+      Utils.log('Error al cargar ventas', error);
+      throw error;
+    }
+  },
+  
+  // Calcular comisión
+  calcularComision() {
+    if (!this.ventasData) return null;
+    
+    const ventaHoy = parseFloat(this.ventasData.A_Acum) || 0;
+    const minimoHoy = parseFloat(this.ventasData.AA_Acum) || 0;
+    const metaHoy = parseFloat(this.ventasData.Meta_Acum) || 0;
+    
+    // Cálculos derivados
+    const arrastreVsMinimo = ventaHoy - minimoHoy;
+    const arrastreVsMeta = ventaHoy - metaHoy;
+    
+    // Determinar tipo de comisión
+    let comision, tipo, porcentaje;
+    
+    if (arrastreVsMinimo > 0) {
+      porcentaje = 0.01; // 1%
+      comision = ventaHoy * porcentaje;
+      tipo = 'special';
+    } else {
+      porcentaje = 0.0075; // 0.75%
+      comision = ventaHoy * porcentaje;
+      tipo = 'normal';
+    }
+    
+    return {
+      comision: comision,
+      tipo: tipo,
+      porcentaje: porcentaje * 100,
+      ventaHoy: ventaHoy,
+      minimoHoy: minimoHoy,
+      metaHoy: metaHoy,
+      arrastreVsMinimo: arrastreVsMinimo,
+      arrastreVsMeta: arrastreVsMeta
+    };
+  },
+  
+  // Formatear moneda
+  formatMoney(value) {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
+  }
+};
+</script>
