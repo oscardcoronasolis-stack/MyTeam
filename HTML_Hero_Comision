@@ -1,0 +1,19 @@
+<!-- ============================================
+     HERO - TARJETA PRINCIPAL DE COMISIÓN
+     ============================================ -->
+<section class="hero-section">
+  <div id="commissionCard" class="commission-card">
+    
+    <div class="commission-label">Comisión al día de hoy</div>
+    
+    <div id="commissionIcon" class="commission-icon">💰</div>
+    
+    <div id="commissionAmount" class="commission-amount">$0</div>
+    
+    <div id="commissionBadge" class="commission-badge">
+      <span id="commissionBadgeIcon">⚡</span>
+      <span id="commissionBadgeText">Cargando...</span>
+    </div>
+    
+  </div>
+</section>
