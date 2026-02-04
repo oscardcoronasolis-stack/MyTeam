@@ -1,0 +1,269 @@
+<script>
+/* ============================================
+   LÓGICA DE LOGIN
+   ============================================ */
+
+const AppLogin = {
+  
+  filteredTiendas: [],
+  
+  // Inicializar
+  async init() {
+    Utils.log('Inicializando aplicación de login');
+    
+    try {
+      await AppData.loadTiendas();
+      this.filteredTiendas = [...AppData.tiendas];
+      
+    } catch (error) {
+      Utils.showError('Error al inicializar: ' + error.message);
+    }
+    
+    // Cerrar dropdown al hacer click fuera
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('tiendaDropdown');
+      const input = document.getElementById('filtroTienda');
+      const searchWrapper = document.querySelector('.search-wrapper');
+      
+      if (dropdown && !dropdown.contains(e.target) && 
+          !searchWrapper.contains(e.target)) {
+        this.hideDropdown();
+      }
+    });
+  },
+  
+  // Evento: Búsqueda de tienda
+  onTiendaSearch() {
+    const searchTerm = document.getElementById('filtroTienda').value.trim();
+    
+    if (searchTerm.length === 0) {
+      this.hideDropdown();
+      this.hideDemo();
+      return;
+    }
+    
+    // Filtrar tiendas por búsqueda (mínimo 1 caracter)
+    const term = Utils.normalize(searchTerm);
+    this.filteredTiendas = AppData.tiendas.filter(t => 
+      Utils.normalize(t.tienda).includes(term) ||
+      Utils.normalize(t.region).includes(term) ||
+      Utils.normalize(t.zona).includes(term)
+    );
+    
+    this.renderDropdown();
+    
+    if (this.filteredTiendas.length > 0) {
+      this.showDropdown();
+    } else {
+      this.hideDropdown();
+    }
+    
+    this.hideDemo();
+  },
+  
+  // Renderizar dropdown
+  renderDropdown() {
+    const dropdown = document.getElementById('tiendaDropdown');
+    if (!dropdown) return;
+    
+    dropdown.innerHTML = '';
+    
+    if (this.filteredTiendas.length === 0) {
+      dropdown.innerHTML = '<div class="tienda-dropdown-empty">No se encontraron tiendas</div>';
+      return;
+    }
+    
+    // Contador de resultados
+    const counter = document.createElement('div');
+    counter.className = 'tienda-dropdown-count';
+    counter.textContent = `${this.filteredTiendas.length} tienda${this.filteredTiendas.length !== 1 ? 's' : ''} encontrada${this.filteredTiendas.length !== 1 ? 's' : ''}`;
+    dropdown.appendChild(counter);
+    
+    // Mostrar todas las tiendas encontradas (sin límite si son pocas)
+    const maxResults = this.filteredTiendas.length > 50 ? 50 : this.filteredTiendas.length;
+    
+    for (let i = 0; i < maxResults; i++) {
+      const tienda = this.filteredTiendas[i];
+      const option = document.createElement('div');
+      option.className = 'tienda-option';
+      
+      // Highlight del término buscado
+      const searchTerm = document.getElementById('filtroTienda').value;
+      const highlightedName = this.highlightText(tienda.tienda, searchTerm);
+      
+      option.innerHTML = `
+        <div class="tienda-option-name">${highlightedName}</div>
+        <div class="tienda-option-details">${tienda.zona} - ${tienda.region}</div>
+      `;
+      
+      option.onclick = () => this.selectTienda(tienda);
+      dropdown.appendChild(option);
+    }
+    
+    if (this.filteredTiendas.length > 50) {
+      const moreMsg = document.createElement('div');
+      moreMsg.className = 'tienda-dropdown-empty';
+      moreMsg.textContent = `+ ${this.filteredTiendas.length - 50} tiendas más... Escribe más caracteres para filtrar`;
+      dropdown.appendChild(moreMsg);
+    }
+  },
+  
+  // Highlight del texto buscado
+  highlightText(text, search) {
+    if (!search) return text;
+    
+    const regex = new RegExp(`(${search})`, 'gi');
+    return text.replace(regex, '<mark style="background: #fff59d; padding: 0 2px; border-radius: 2px;">$1</mark>');
+  },
+  
+  // Seleccionar tienda del dropdown
+  selectTienda(tienda) {
+    document.getElementById('filtroTienda').value = tienda.tienda;
+    AppData.selectedTienda = tienda;
+    this.hideDropdown();
+    this.showDemo();
+  },
+  
+  // Mostrar dropdown
+  showDropdown() {
+    Utils.show('tiendaDropdown');
+  },
+  
+  // Ocultar dropdown
+  hideDropdown() {
+    Utils.hide('tiendaDropdown');
+  },
+  
+  // Mostrar selector de demo
+  showDemo() {
+    Utils.show('demoSection');
+    this.hideProfile();
+    Utils.hide('passwordSection');
+    Utils.hide('btnLogin');
+  },
+  
+  // Ocultar selector de demo
+  hideDemo() {
+    Utils.hide('demoSection');
+    this.hideProfile();
+    Utils.hide('passwordSection');
+    Utils.hide('btnLogin');
+    AppData.selectedDemo = null;
+  },
+  
+  // Seleccionar demo
+  selectDemo(demo, btn) {
+    document.querySelectorAll('.btn-demo').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    AppData.selectedDemo = demo;
+    this.showProfile();
+    Utils.show('passwordSection');
+    Utils.show('btnLogin');
+    
+    setTimeout(() => {
+      document.getElementById('passwordInput').focus();
+    }, 300);
+  },
+  
+  // Mostrar perfil
+  showProfile() {
+    const userData = AppData.getDemoData(AppData.selectedTienda, AppData.selectedDemo);
+    if (!userData) return;
+    
+    const photoEl = document.getElementById('userPhoto');
+    photoEl.src = userData.foto;
+    photoEl.onerror = function() {
+      this.src = 'https://via.placeholder.com/110?text=Sin+Foto';
+    };
+    
+    document.getElementById('userName').textContent = `Bienvenida, ${userData.nombre}`;
+    
+    document.getElementById('userDetails').innerHTML = `
+      <strong>${userData.tienda}</strong><br>
+      ${userData.demo}<br>
+      ${userData.zona} - ${userData.region}
+    `;
+    
+    Utils.show('userProfile');
+  },
+  
+  // Ocultar perfil
+  hideProfile() {
+    Utils.hide('userProfile');
+  },
+  
+  // Evento: Enter en password
+  onPasswordKeypress(event) {
+    if (event.key === 'Enter') {
+      this.handleLogin();
+    }
+  },
+  
+  // Manejar login
+  async handleLogin() {
+    if (!AppData.selectedTienda || !AppData.selectedDemo) {
+      Utils.showError('Por favor completa todos los campos');
+      return;
+    }
+    
+    const password = document.getElementById('passwordInput').value;
+    if (!password) {
+      Utils.showError('Ingresa la contraseña');
+      return;
+    }
+    
+    const btn = document.getElementById('btnLogin');
+    btn.disabled = true;
+    btn.textContent = 'Verificando...';
+    
+    try {
+      const isValid = await new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .verificarPassword(password);
+      });
+      
+      if (isValid) {
+        const userData = AppData.getDemoData(AppData.selectedTienda, AppData.selectedDemo);
+        sessionStorage.setItem('userData', JSON.stringify(userData));
+        
+        this.goToDashboard();
+        
+      } else {
+        Utils.showError('❌ Contraseña incorrecta');
+        document.getElementById('passwordInput').value = '';
+        document.getElementById('passwordInput').focus();
+      }
+      
+    } catch (error) {
+      Utils.showError('Error al verificar: ' + error.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Ingresar';
+    }
+  },
+  
+  // Ir al dashboard
+  goToDashboard() {
+    Utils.hide('loginScreen');
+    Utils.show('dashboardScreen');
+
+
+    Dashboard.init();
+    
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
+    document.getElementById('user-info').innerHTML = `
+      <h2>Hola, ${userData.nombre}</h2>
+      <p>Tienda: ${userData.tienda}</p>
+      <p>Demo: ${userData.demo}</p>
+    `;
+  }
+};
+
+// Inicializar cuando cargue el DOM
+window.addEventListener('DOMContentLoaded', () => {
+  AppLogin.init();
+});
+</script>
