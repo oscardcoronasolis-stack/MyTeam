@@ -1,0 +1,93 @@
+<!-- ============================================
+     COMPONENTE - PANTALLA DE LOGIN
+     ============================================ -->
+<div id="loginScreen">
+  <div class="login-container">
+    
+    <!-- HEADER -->
+    <div class="login-header">
+      <img 
+        src="https://lh3.googleusercontent.com/d/1WZQM_pC7kbPC_svzgzJiEDU8Z7YMuGCB" 
+        class="login-logo" 
+        alt="Liverpool Logo"
+      >
+      <h1 class="login-title">My Team</h1>
+      <p class="login-subtitle">
+        <strong>Aviso de confidencialidad</strong><br>
+        Esta información es confidencial. El acceso está monitoreado.
+      </p>
+    </div>
+    
+    <!-- LOADING -->
+    <div id="loadingMessage" class="message message-loading hidden">
+      <div class="loading-spinner"></div>
+      Cargando datos de tiendas...
+    </div>
+    
+    <!-- FILTRO ÚNICO DE TIENDA -->
+    <div id="filtersSection" class="filters-section hidden">
+      
+      <div class="filter-group">
+        <label class="filter-label">Selecciona tu Tienda</label>
+        
+        <!-- Input con búsqueda -->
+        <div class="search-wrapper">
+          <input 
+            type="text" 
+            id="filtroTienda" 
+            class="filter-input search-input"
+            placeholder="Buscar tienda..."
+            oninput="AppLogin.onTiendaSearch()"
+            autocomplete="off"
+          >
+          <span class="search-icon">🔍</span>
+        </div>
+        
+        <!-- Dropdown con resultados -->
+        <div id="tiendaDropdown" class="tienda-dropdown hidden"></div>
+      </div>
+      
+    </div>
+    
+    <!-- SELECTOR DEMO -->
+    <div id="demoSection" class="demo-section hidden">
+      <p class="demo-title">¿Qué Demo eres?</p>
+      <div class="demo-buttons">
+        <button class="btn-demo" onclick="AppLogin.selectDemo('Senior', this)">Senior</button>
+        <button class="btn-demo" onclick="AppLogin.selectDemo('Junior', this)">Junior</button>
+        <button class="btn-demo" onclick="AppLogin.selectDemo('Weekend', this)">Weekend</button>
+      </div>
+    </div>
+    
+    <!-- PERFIL USUARIO -->
+    <div id="userProfile" class="user-profile hidden">
+      <img id="userPhoto" src="" class="user-photo" alt="Foto">
+      <div id="userName" class="user-name"></div>
+      <div id="userDetails" class="user-details"></div>
+    </div>
+    
+    <!-- PASSWORD -->
+    <div id="passwordSection" class="password-group hidden">
+      <input 
+        type="password" 
+        id="passwordInput" 
+        class="password-input"
+        placeholder="Ingrese la contraseña"
+        onkeypress="AppLogin.onPasswordKeypress(event)"
+      >
+    </div>
+    
+    <!-- BOTÓN LOGIN -->
+    <button 
+      id="btnLogin" 
+      class="btn-login hidden" 
+      onclick="AppLogin.handleLogin()"
+    >
+      Ingresar
+    </button>
+    
+    <!-- MENSAJE ERROR -->
+    <div id="errorMessage" class="message message-error hidden"></div>
+    
+  </div>
+</div>
