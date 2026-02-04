@@ -1,0 +1,155 @@
+// ============================================
+// BACKEND - GOOGLE APPS SCRIPT
+// ============================================
+
+/**
+ * Función principal - Sirve la aplicación web
+ */
+function doGet() {
+  return HtmlService.createTemplateFromFile('Index')
+    .evaluate()
+    .setTitle('Sistema Ventas Liverpool')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/**
+ * Incluir archivos HTML modulares
+ */
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+function getTiendasData() {
+  try {
+    const ss = SpreadsheetApp.openById('1w5mQyE-Zb3Wrk3h9bLlZYv6NnIJP_lE7HjgV01IjzWQ');
+    const sheet = ss.getSheets()[0]; // Primera hoja
+    const data = sheet.getDataRange().getValues();
+    
+    // Log para debug
+    Logger.log('Total filas en Sheet: ' + data.length);
+    Logger.log('Primera fila (headers): ' + data[0]);
+    
+    // Remover headers (primera fila)
+    const rows = data.slice(1);
+    
+    // Convertir a array de objetos
+    const tiendas = rows.map(row => ({
+      tienda: row[1] || "",        // Columna B
+      region: row[2] || "",        // Columna C
+      zona: row[3] || "",          // Columna D
+      fotoSenior: row[4] || "",    // Columna E
+      fotoJunior: row[5] || "",    // Columna F
+      fotoWeekend: row[6] || "",   // Columna G
+      nombreSenior: row[7] || "",     // Columna H
+      nombreJunior: row[8] || "",     // Columna I
+      nombreWeekend: row[9] || ""     // Columna J
+    })).filter(t => t.tienda); // Filtrar filas vacías
+    
+    Logger.log('Total tiendas procesadas: ' + tiendas.length);
+    Logger.log('Primera tienda: ' + JSON.stringify(tiendas[0]));
+    
+    return tiendas;
+    
+  } catch (error) {
+    Logger.log('❌ ERROR en getTiendasData: ' + error.toString());
+    Logger.log('Stack: ' + error.stack);
+    throw new Error('Error al cargar datos de tiendas: ' + error.message);
+  }
+}
+
+/**
+ * Obtener datos de tiendas desde Google Sheets
+ */
+
+
+/**
+/**
+ * Verificar contraseña
+ */
+function verificarPassword(password) {
+  const PASSWORDS_VALIDAS = ['Monet']; // ← CAMBIADO
+  return PASSWORDS_VALIDAS.includes(password);
+}
+
+/**
+ * PLACEHOLDER - Aquí irán las consultas a BigQuery
+ */
+function consultarVentasDiarias(tienda, fechaInicio, fechaFin) {
+  // Por ahora retorna datos dummy
+  return [
+    { fecha: '2026-01-01', venta: 10000, meta: 12000 },
+    { fecha: '2026-01-02', venta: 15000, meta: 12000 }
+  ];
+}
+
+/**
+ * Obtener ID de tienda por nombre
+ */
+function getTiendaId(nombreTienda) {
+  try {
+    const ss = SpreadsheetApp.openById('1w5mQyE-Zb3Wrk3h9bLlZYv6NnIJP_lE7HjgV01IjzWQ');
+    const sheet = ss.getSheets()[0];
+    const data = sheet.getDataRange().getValues();
+    
+    // Buscar la tienda (columna B) y retornar el ID (columna A)
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][1] === nombreTienda) {
+        return data[i][0]; // Columna A = ID
+      }
+    }
+    
+    throw new Error('Tienda no encontrada: ' + nombreTienda);
+    
+  } catch (error) {
+    Logger.log('Error en getTiendaId: ' + error.toString());
+    throw error;
+  }
+}
+
+/**
+ * Consultar ventas acumuladas desde BigQuery
+ */
+function consultarVentasAcumuladas(tiendaId) {
+  try {
+    const query = `
+      SELECT 
+        Tienda,
+        Fecha_Actualizacion,
+        A_Acum,
+        AA_Acum,
+        Meta_Acum,
+        AA_dif_Acum,
+        Meta_dif_Acum
+      FROM \`ivonne-399623.IVONNE.Ventas_Acumulado_2026\`
+      WHERE Tienda = ${tiendaId}
+    `;
+    
+    const request = {
+      query: query,
+      useLegacySql: false,
+      timeoutMs: 30000
+    };
+    
+    const queryResults = BigQuery.Jobs.query(request, 'ivonne-399623');
+    
+    if (!queryResults.rows || queryResults.rows.length === 0) {
+      throw new Error('No se encontraron datos para la tienda ' + tiendaId);
+    }
+    
+    // Convertir a objeto
+    const row = queryResults.rows[0];
+    const result = {};
+    queryResults.schema.fields.forEach((field, index) => {
+      result[field.name] = row.f[index].v;
+    });
+    
+    Logger.log('Datos de ventas para tienda ' + tiendaId + ': ' + JSON.stringify(result));
+    
+    return result;
+    
+  } catch (error) {
+    Logger.log('Error en consultarVentasAcumuladas: ' + error.toString());
+    throw error;
+  }
+}
