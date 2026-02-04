@@ -1,0 +1,41 @@
+<style>
+/* ============================================
+   VARIABLES CSS - TEMA Y COLORES
+   ============================================ */
+:root {
+  /* Colores Principales */
+  --primary-dark: #2c3e50;
+  --primary-light: #34495e;
+  --accent-red: #e74c3c;
+  
+  /* Grises */
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+  
+  /* Texto */
+  --text-primary: #333;
+  --text-secondary: #666;
+  --text-muted: #999;
+  
+  /* Bordes */
+  --border-light: #ddd;
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+  
+  /* Sombras */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.3);
+  
+  /* Transiciones */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+}
+</style>
