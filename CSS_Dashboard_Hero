@@ -1,0 +1,200 @@
+<style>
+/* ============================================
+   HERO - TARJETA DE COMISIÓN PRINCIPAL
+   ============================================ */
+
+.hero-section {
+  padding: var(--spacing-xl) var(--spacing-md);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+}
+
+.commission-card {
+  background: var(--surface-dark);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--shadow-card);
+  
+  /* Animación de entrada */
+  animation: cardEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-fill-mode: both;
+}
+
+@keyframes cardEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Estado: Comisión Especial */
+.commission-card.special {
+  border-color: var(--neon-green);
+  box-shadow: var(--glow-green), var(--shadow-card);
+}
+
+.commission-card.special::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: var(--gradient-special);
+  border-radius: var(--radius-xl);
+  z-index: -1;
+  opacity: 0.1;
+}
+
+/* Estado: Comisión Sencilla */
+.commission-card.normal {
+  border-color: var(--electric-purple);
+  box-shadow: var(--glow-purple), var(--shadow-card);
+}
+
+.commission-card.normal::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: var(--gradient-normal);
+  border-radius: var(--radius-xl);
+  z-index: -1;
+  opacity: 0.1;
+}
+
+/* Label superior */
+.commission-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: var(--spacing-sm);
+  opacity: 0;
+  animation: fadeIn 0.4s ease 0.3s forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* Icono */
+.commission-icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-md);
+  opacity: 0;
+  animation: iconBounce 0.6s ease 0.4s forwards;
+}
+
+@keyframes iconBounce {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-180deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Monto de comisión */
+.commission-amount {
+  font-family: var(--font-mono);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  margin: var(--spacing-lg) 0;
+  opacity: 0;
+  animation: numberReveal 0.8s ease 0.5s forwards;
+}
+
+@keyframes numberReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.commission-card.special .commission-amount {
+  color: var(--neon-green);
+  text-shadow: 0 0 30px rgba(20, 241, 149, 0.5);
+}
+
+.commission-card.normal .commission-amount {
+  color: var(--electric-purple);
+  text-shadow: 0 0 30px rgba(153, 69, 255, 0.5);
+}
+
+/* Badge del tipo */
+.commission-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0;
+  animation: badgeSlide 0.5s ease 0.7s forwards;
+}
+
+@keyframes badgeSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.commission-card.special .commission-badge {
+  background: rgba(20, 241, 149, 0.15);
+  color: var(--neon-green);
+  border: 1px solid var(--neon-green);
+}
+
+.commission-card.normal .commission-badge {
+  background: rgba(153, 69, 255, 0.15);
+  color: var(--electric-purple);
+  border: 1px solid var(--electric-purple);
+}
+
+/* Responsive */
+@media (max-width: 380px) {
+  .commission-amount {
+    font-size: 40px;
+  }
+  
+  .commission-icon {
+    font-size: 40px;
+  }
+}
+</style>
