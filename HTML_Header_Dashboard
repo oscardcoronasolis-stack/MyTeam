@@ -1,0 +1,19 @@
+<!-- ============================================
+     HEADER - BARRA SUPERIOR DEL DASHBOARD
+     ============================================ -->
+<header class="dashboard-header">
+  <div class="header-content">
+    <img 
+      id="dashboardUserPhoto" 
+      src="" 
+      alt="User" 
+      class="user-avatar"
+      onerror="this.src='https://via.placeholder.com/48?text=👤'"
+    >
+    <div class="user-info">
+      <div class="welcome-text">Bienvenida</div>
+      <div id="dashboardUserName" class="user-name">Cargando...</div>
+      <div id="dashboardUserDetails" class="user-details">...</div>
+    </div>
+  </div>
+</header>
