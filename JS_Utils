@@ -1,0 +1,55 @@
+<script>
+/* ============================================
+   UTILIDADES GENERALES
+   ============================================ */
+
+const Utils = {
+  
+  // Mostrar/ocultar elementos
+  show(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) el.classList.remove('hidden');
+  },
+  
+  hide(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) el.classList.add('hidden');
+  },
+  
+  toggle(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) el.classList.toggle('hidden');
+  },
+  
+  // Obtener valores únicos y ordenados de un array
+  getUniqueValues(array, key) {
+    return [...new Set(array.map(item => key ? item[key] : item))]
+      .filter(Boolean)
+      .sort();
+  },
+  
+  // Normalizar texto para búsqueda
+  normalize(text) {
+    return text.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+  },
+  
+  // Mostrar mensaje de error
+  showError(message) {
+    const errorEl = document.getElementById('errorMessage');
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.classList.remove('hidden');
+      setTimeout(() => errorEl.classList.add('hidden'), 5000);
+    }
+  },
+  
+  // Log con timestamp
+  log(message, data = null) {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${message}`, data || '');
+  }
+};
+</script>
