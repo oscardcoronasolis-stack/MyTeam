@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    
+    <!-- ===== CSS LOGIN ===== -->
+    <?!= include('CSS_Variables'); ?>
+    <?!= include('CSS_Common'); ?>
+    <?!= include('CSS_Login'); ?>
+    
+    <!-- ===== CSS DASHBOARD ===== -->
+    <?!= include('CSS_Variables_Dashboard'); ?>
+    <?!= include('CSS_Dashboard_Layout'); ?>
+    <?!= include('CSS_Dashboard_Hero'); ?>
+    
+    <!-- ===== JS LOGIN ===== -->
+    <?!= include('JS_Utils'); ?>
+    <?!= include('JS_Data'); ?>
+    <?!= include('JS_Login'); ?>
+    
+    <!-- ===== JS DASHBOARD ===== -->
+    <?!= include('JS_Dashboard_Data'); ?>
+    <?!= include('JS_Dashboard_Render'); ?>
+    <?!= include('JS_Dashboard_Main'); ?>
+  </head>
+  
+  <body>
+    <!-- ===== PANTALLA DE LOGIN ===== -->
+    <?!= include('HTML_Login'); ?>
+    
+    <!-- ===== PANTALLA DE DASHBOARD ===== -->
+    <div id="dashboardScreen" style="display: none;">
+      <?!= include('HTML_Dashboard'); ?>
+    </div>
+  </body>
+</html>
