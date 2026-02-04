@@ -1,0 +1,215 @@
+// ============================================
+// CONFIGURACIÓN
+// ============================================
+
+const PROJECT_ID = 'ivonne-399623';
+const DATASET = 'IVONNE';
+
+// ============================================
+// FUNCIONES PRINCIPALES
+// ============================================
+
+/**
+ * Consulta ventas diarias
+ * @param {number} tienda - Número de tienda
+ * @param {string} fechaInicio - Formato: 'YYYY-MM-DD' (ej: '2026-01-01')
+ * @param {string} fechaFin - Formato: 'YYYY-MM-DD' (ej: '2026-01-31')
+ * @returns {Array} Array de objetos con los resultados
+ */
+function consultarVentasDiarias(tienda, fechaInicio, fechaFin) {
+  const query = `
+    SELECT 
+      Fecha,
+      Mes,
+      Dia,
+      Semana,
+      Tienda,
+      A,
+      AA,
+      Meta,
+      AA_dif,
+      Meta_dif
+    FROM \`${PROJECT_ID}.${DATASET}.Ventas_Diario_2026\`
+    WHERE Tienda = ${tienda}
+      AND Fecha BETWEEN '${fechaInicio}' AND '${fechaFin}'
+    ORDER BY Fecha DESC
+  `;
+  
+  return ejecutarQuery(query);
+}
+
+/**
+ * Consulta ventas semanales
+ * @param {number} tienda - Número de tienda
+ * @param {number} semanaInicio - Número de semana (1-53)
+ * @param {number} semanaFin - Número de semana (1-53)
+ * @returns {Array} Array de objetos con los resultados
+ */
+function consultarVentasSemanales(tienda, semanaInicio, semanaFin) {
+  const query = `
+    SELECT 
+      Anio,
+      Semana,
+      Tienda,
+      Fecha_Inicio_Semana,
+      Fecha_Fin_Semana,
+      A,
+      AA,
+      Meta,
+      AA_dif,
+      Meta_dif
+    FROM \`${PROJECT_ID}.${DATASET}.Ventas_Semanal_2026\`
+    WHERE Tienda = ${tienda}
+      AND Semana BETWEEN ${semanaInicio} AND ${semanaFin}
+    ORDER BY Semana DESC
+  `;
+  
+  return ejecutarQuery(query);
+}
+
+/**
+ * Consulta ventas mensuales
+ * @param {number} tienda - Número de tienda
+ * @param {number} mesInicio - Mes (1-12)
+ * @param {number} mesFin - Mes (1-12)
+ * @returns {Array} Array de objetos con los resultados
+ */
+function consultarVentasMensuales(tienda, mesInicio, mesFin) {
+  const query = `
+    SELECT 
+      Anio,
+      Mes,
+      Tienda,
+      Fecha_Inicio_Mes,
+      Fecha_Fin_Mes,
+      A,
+      AA,
+      Meta,
+      AA_dif,
+      Meta_dif
+    FROM \`${PROJECT_ID}.${DATASET}.Ventas_Mensual_2026\`
+    WHERE Tienda = ${tienda}
+      AND Mes BETWEEN ${mesInicio} AND ${mesFin}
+    ORDER BY Mes DESC
+  `;
+  
+  return ejecutarQuery(query);
+}
+
+/**
+ * Consulta ventas acumuladas (total año hasta hoy)
+ * @param {number} tienda - Número de tienda
+ * @returns {Object} Objeto con los totales acumulados
+ */
+function consultarVentasAcumuladas(tienda) {
+  const query = `
+    SELECT 
+      Tienda,
+      Fecha_Actualizacion,
+      A_Acum,
+      AA_Acum,
+      Meta_Acum,
+      AA_dif_Acum,
+      Meta_dif_Acum
+    FROM \`${PROJECT_ID}.${DATASET}.Ventas_Acumulado_2026\`
+    WHERE Tienda = ${tienda}
+  `;
+  
+  const resultados = ejecutarQuery(query);
+  return resultados.length > 0 ? resultados[0] : null;
+}
+
+/**
+ * Consulta todas las tiendas disponibles
+ * @returns {Array} Array con números de tienda
+ */
+function obtenerListaTiendas() {
+  const query = `
+    SELECT DISTINCT Tienda
+    FROM \`${PROJECT_ID}.${DATASET}.Ventas_Diario_2026\`
+    ORDER BY Tienda
+  `;
+  
+  return ejecutarQuery(query);
+}
+
+// ============================================
+// FUNCIÓN AUXILIAR (NO MODIFICAR)
+// ============================================
+
+/**
+ * Ejecuta un query en BigQuery y retorna los resultados
+ * @param {string} query - Query SQL a ejecutar
+ * @returns {Array} Array de objetos con los resultados
+ */
+function ejecutarQuery(query) {
+  try {
+    const request = {
+      query: query,
+      useLegacySql: false,
+      timeoutMs: 30000 // 30 segundos
+    };
+    
+    const queryResults = BigQuery.Jobs.query(request, PROJECT_ID);
+    
+    if (!queryResults.rows) {
+      return [];
+    }
+    
+    // Convertir a formato de objetos
+    return queryResults.rows.map(row => {
+      const obj = {};
+      queryResults.schema.fields.forEach((field, index) => {
+        obj[field.name] = row.f[index].v;
+      });
+      return obj;
+    });
+    
+  } catch (error) {
+    Logger.log('❌ Error en query: ' + error.toString());
+    throw new Error('Error al consultar BigQuery: ' + error.message);
+  }
+}
+
+// ============================================
+// FUNCIONES DE PRUEBA
+// ============================================
+
+/**
+ * Función de prueba - Ejecutar desde el editor
+ * Click en: Ejecutar > probarConsultas
+ */
+function probarConsultas() {
+  Logger.log('🔍 Iniciando pruebas...\n');
+  
+  // Probar lista de tiendas
+  Logger.log('=== LISTA DE TIENDAS ===');
+  const tiendas = obtenerListaTiendas();
+  Logger.log('Total tiendas: ' + tiendas.length);
+  Logger.log(tiendas.slice(0, 5)); // Muestra las primeras 5
+  
+  // Probar diarias
+  Logger.log('\n=== VENTAS DIARIAS (Tienda 1) ===');
+  const diarias = consultarVentasDiarias(1, '2026-01-01', '2026-01-10');
+  Logger.log('Total registros: ' + diarias.length);
+  Logger.log(diarias[0]); // Muestra el primero
+  
+  // Probar semanales
+  Logger.log('\n=== VENTAS SEMANALES (Tienda 1) ===');
+  const semanales = consultarVentasSemanales(1, 1, 5);
+  Logger.log('Total registros: ' + semanales.length);
+  Logger.log(semanales[0]);
+  
+  // Probar mensuales
+  Logger.log('\n=== VENTAS MENSUALES (Tienda 1) ===');
+  const mensuales = consultarVentasMensuales(1, 1, 3);
+  Logger.log('Total registros: ' + mensuales.length);
+  Logger.log(mensuales[0]);
+    
+  // Probar acumulado
+  Logger.log('\n=== VENTAS ACUMULADAS (Tienda 1) ===');
+  const acumuladas = consultarVentasAcumuladas(1);
+  Logger.log(acumuladas);
+  
+  Logger.log('\n✅ Pruebas completadas');
+}
