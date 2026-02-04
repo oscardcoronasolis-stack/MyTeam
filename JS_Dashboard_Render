@@ -1,0 +1,40 @@
+<script>
+const DashboardRender = {
+  
+  renderHeader() {
+    const userData = DashboardData.userData;
+    document.getElementById('dashboardUserPhoto').src = userData.foto;
+    document.getElementById('dashboardUserName').textContent = userData.nombre;
+    document.getElementById('dashboardUserDetails').textContent = `${userData.tienda} • ${userData.demo}`;
+  },
+  
+  renderComision() {
+    const comisionData = DashboardData.calcularComision();
+    if (!comisionData) return;
+    
+    const card = document.getElementById('commissionCard');
+    const amount = document.getElementById('commissionAmount');
+    const badgeIcon = document.getElementById('commissionBadgeIcon');
+    const badgeText = document.getElementById('commissionBadgeText');
+    const icon = document.getElementById('commissionIcon');
+    
+    card.classList.add(comisionData.tipo);
+    amount.textContent = DashboardData.formatMoney(comisionData.comision);
+    
+    if (comisionData.tipo === 'special') {
+      badgeIcon.textContent = '🌟';
+      badgeText.textContent = 'Comisión Especial';
+      icon.textContent = '💰';
+    } else {
+      badgeIcon.textContent = '⚡';
+      badgeText.textContent = 'Comisión Sencilla';
+      icon.textContent = '💵';
+    }
+  },
+  
+  async render() {
+    this.renderHeader();
+    this.renderComision();
+  }
+};
+</script>
