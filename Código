@@ -20,31 +20,31 @@ function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
+/**
+ * Obtener datos de tiendas desde Google Sheets
+ */
 function getTiendasData() {
   try {
     const ss = SpreadsheetApp.openById('1w5mQyE-Zb3Wrk3h9bLlZYv6NnIJP_lE7HjgV01IjzWQ');
-    const sheet = ss.getSheets()[0]; // Primera hoja
+    const sheet = ss.getSheets()[0];
     const data = sheet.getDataRange().getValues();
     
-    // Log para debug
     Logger.log('Total filas en Sheet: ' + data.length);
     Logger.log('Primera fila (headers): ' + data[0]);
     
-    // Remover headers (primera fila)
     const rows = data.slice(1);
     
-    // Convertir a array de objetos
     const tiendas = rows.map(row => ({
-      tienda: row[1] || "",        // Columna B
-      region: row[2] || "",        // Columna C
-      zona: row[3] || "",          // Columna D
-      fotoSenior: row[4] || "",    // Columna E
-      fotoJunior: row[5] || "",    // Columna F
-      fotoWeekend: row[6] || "",   // Columna G
-      nombreSenior: row[7] || "",     // Columna H
-      nombreJunior: row[8] || "",     // Columna I
-      nombreWeekend: row[9] || ""     // Columna J
-    })).filter(t => t.tienda); // Filtrar filas vacías
+      tienda: row[1] || "",
+      region: row[2] || "",
+      zona: row[3] || "",
+      fotoSenior: row[4] || "",
+      fotoJunior: row[5] || "",
+      fotoWeekend: row[6] || "",
+      nombreSenior: row[7] || "",
+      nombreJunior: row[8] || "",
+      nombreWeekend: row[9] || ""
+    })).filter(t => t.tienda);
     
     Logger.log('Total tiendas procesadas: ' + tiendas.length);
     Logger.log('Primera tienda: ' + JSON.stringify(tiendas[0]));
@@ -59,28 +59,11 @@ function getTiendasData() {
 }
 
 /**
- * Obtener datos de tiendas desde Google Sheets
- */
-
-
-/**
-/**
  * Verificar contraseña
  */
 function verificarPassword(password) {
-  const PASSWORDS_VALIDAS = ['Monet']; // ← CAMBIADO
+  const PASSWORDS_VALIDAS = ['Monet'];
   return PASSWORDS_VALIDAS.includes(password);
-}
-
-/**
- * PLACEHOLDER - Aquí irán las consultas a BigQuery
- */
-function consultarVentasDiarias(tienda, fechaInicio, fechaFin) {
-  // Por ahora retorna datos dummy
-  return [
-    { fecha: '2026-01-01', venta: 10000, meta: 12000 },
-    { fecha: '2026-01-02', venta: 15000, meta: 12000 }
-  ];
 }
 
 /**
@@ -92,10 +75,10 @@ function getTiendaId(nombreTienda) {
     const sheet = ss.getSheets()[0];
     const data = sheet.getDataRange().getValues();
     
-    // Buscar la tienda (columna B) y retornar el ID (columna A)
     for (let i = 1; i < data.length; i++) {
       if (data[i][1] === nombreTienda) {
-        return data[i][0]; // Columna A = ID
+        Logger.log('Tienda encontrada: ' + nombreTienda + ' con ID: ' + data[i][0]);
+        return data[i][0];
       }
     }
     
@@ -107,49 +90,360 @@ function getTiendaId(nombreTienda) {
   }
 }
 
+// ============================================
+// FUNCIONES BIGQUERY
+// ============================================
+
+const PROJECT_ID = 'ivonne-399623';
+const DATASET = 'IVONNE';
+
+/**
+ * Ejecuta un query en BigQuery con parámetros nombrados (SEGURO)
+ */
+function ejecutarQueryConParametros(query, params = {}) {
+  try {
+    const request = {
+      query: query,
+      useLegacySql: false,
+      timeoutMs: 30000,
+      queryParameters: []
+    };
+    
+    for (const [key, value] of Object.entries(params)) {
+      const paramType = typeof value === 'number' ? 'INT64' : 'STRING';
+      
+      request.queryParameters.push({
+        name: key,
+        parameterType: { type: paramType },
+        parameterValue: { value: String(value) }
+      });
+    }
+    
+    const queryResults = BigQuery.Jobs.query(request, PROJECT_ID);
+    
+    if (!queryResults.rows) {
+      return [];
+    }
+    
+    return queryResults.rows.map(row => {
+      const obj = {};
+      queryResults.schema.fields.forEach((field, index) => {
+        obj[field.name] = row.f[index].v;
+      });
+      return obj;
+    });
+    
+  } catch (error) {
+    Logger.log('❌ Error en ejecutarQueryConParametros: ' + error.toString());
+    throw new Error('Error al consultar BigQuery: ' + error.message);
+  }
+}
+
 /**
  * Consultar ventas acumuladas desde BigQuery
  */
 function consultarVentasAcumuladas(tiendaId) {
   try {
+    Logger.log('Consultando ventas acumuladas para tienda: ' + tiendaId);
+    
     const query = `
       SELECT 
         Tienda,
         Fecha_Actualizacion,
+        Quincena_Actual,
         A_Acum,
         AA_Acum,
         Meta_Acum,
         AA_dif_Acum,
-        Meta_dif_Acum
-      FROM \`ivonne-399623.IVONNE.Ventas_Acumulado_2026\`
-      WHERE Tienda = ${tiendaId}
+        Meta_dif_Acum,
+        Objetivo_Comision_Acum,
+        Tipo_Comision,
+        Comision_Acum,
+        Cumple_Meta,
+        GemasSencilla_Acum,
+        GemasDoble_Acum
+      FROM \`${PROJECT_ID}.${DATASET}.Ventas_Acumulado_2026\`
+      WHERE Tienda = @tiendaId
+      LIMIT 1
     `;
     
+    const resultados = ejecutarQueryConParametros(query, { tiendaId: tiendaId });
+    
+    if (resultados.length === 0) {
+      throw new Error('No se encontraron datos para la tienda ' + tiendaId);
+    }
+    
+    Logger.log('Datos cargados: ' + JSON.stringify(resultados[0]));
+    
+    return resultados[0];
+    
+  } catch (error) {
+    Logger.log('Error en consultarVentasAcumuladas: ' + error.toString());
+    throw error;
+  }
+}
+
+/**
+ * Consultar objetivo de comisión para un mes específico
+ */
+function consultarObjetivoComision(tiendaId, mes) {
+  try {
+    Logger.log('Consultando objetivo comisión - Tienda: ' + tiendaId + ', Mes: ' + mes);
+    
+    const query = `
+      SELECT 
+        Objetivo_Comision
+      FROM \`${PROJECT_ID}.${DATASET}.Ventas_MensualAcumulado_2026\`
+      WHERE Tienda = @tiendaId
+        AND Mes = @mes
+      LIMIT 1
+    `;
+    
+    const resultados = ejecutarQueryConParametros(query, {
+      tiendaId: tiendaId,
+      mes: mes
+    });
+    
+    if (resultados.length === 0) {
+      Logger.log('No se encontró objetivo para tienda: ' + tiendaId + ', mes: ' + mes);
+      return { Objetivo_Comision: 0 };
+    }
+    
+    Logger.log('Objetivo comisión cargado: ' + resultados[0].Objetivo_Comision);
+    
+    return resultados[0];
+    
+  } catch (error) {
+    Logger.log('Error en consultarObjetivoComision: ' + error.toString());
+    throw error;
+  }
+}
+
+/**
+ * Consultar ventas diarias
+ */
+function consultarVentasDiarias(tiendaId, fechaInicio, fechaFin) {
+  try {
+    Logger.log('Consultando ventas diarias - Tienda: ' + tiendaId);
+    
+    const query = `
+      SELECT 
+        Fecha,
+        Mes,
+        Dia,
+        Semana,
+        Quincena,
+        Tienda,
+        A,
+        AA,
+        Meta,
+        AA_dif,
+        Meta_dif,
+        Objetivo_Comision,
+        Tipo_Comision,
+        Comision,
+        Cumple_Meta,
+        GemasSencilla,
+        GemasDoble
+      FROM \`${PROJECT_ID}.${DATASET}.Ventas_Diario_2026\`
+      WHERE Tienda = @tiendaId
+        AND Fecha BETWEEN @fechaInicio AND @fechaFin
+      ORDER BY Fecha DESC
+    `;
+    
+    return ejecutarQueryConParametros(query, {
+      tiendaId: tiendaId,
+      fechaInicio: fechaInicio,
+      fechaFin: fechaFin
+    });
+    
+  } catch (error) {
+    Logger.log('Error en consultarVentasDiarias: ' + error.toString());
+    throw error;
+  }
+}
+
+/**
+ * Consultar ventas semanales
+ */
+function consultarVentasSemanales(tiendaId, semanaInicio, semanaFin) {
+  try {
+    Logger.log('Consultando ventas semanales - Tienda: ' + tiendaId);
+    
+    const query = `
+      SELECT 
+        Anio,
+        Semana,
+        Quincena,
+        Tienda,
+        Fecha_Inicio_Semana,
+        Fecha_Fin_Semana,
+        A,
+        AA,
+        Meta,
+        AA_dif,
+        Meta_dif,
+        Objetivo_Comision,
+        Tipo_Comision,
+        Comision,
+        Cumple_Meta,
+        GemasSencilla,
+        GemasDoble
+      FROM \`${PROJECT_ID}.${DATASET}.Ventas_Semanal_2026\`
+      WHERE Tienda = @tiendaId
+        AND Semana BETWEEN @semanaInicio AND @semanaFin
+      ORDER BY Semana DESC
+    `;
+    
+    return ejecutarQueryConParametros(query, {
+      tiendaId: tiendaId,
+      semanaInicio: semanaInicio,
+      semanaFin: semanaFin
+    });
+    
+  } catch (error) {
+    Logger.log('Error en consultarVentasSemanales: ' + error.toString());
+    throw error;
+  }
+}
+
+/**
+ * Consultar ventas mensuales
+ */
+function consultarVentasMensuales(tiendaId, mesInicio, mesFin) {
+  try {
+    Logger.log('Consultando ventas mensuales - Tienda: ' + tiendaId);
+    
+    const query = `
+      SELECT 
+        Anio,
+        Mes,
+        Quincena,
+        Tienda,
+        Fecha_Inicio_Mes,
+        Fecha_Fin_Mes,
+        A,
+        AA,
+        Meta,
+        AA_dif,
+        Meta_dif,
+        A_Acum,
+        AA_Acum,
+        Meta_Acum,
+        AA_dif_Acum,
+        Meta_dif_Acum,
+        Objetivo_Comision,
+        Objetivo_Comision_Acum,
+        Tipo_Comision,
+        Comision,
+        Cumple_Meta,
+        GemasSencilla,
+        GemasDoble,
+        Tipo_Comision_Acum,
+        Comision_Acum,
+        Cumple_Meta_Acum,
+        GemasSencilla_Acum,
+        GemasDoble_Acum
+      FROM \`${PROJECT_ID}.${DATASET}.Ventas_Mensual_2026\`
+      WHERE Tienda = @tiendaId
+        AND Mes BETWEEN @mesInicio AND @mesFin
+      ORDER BY Mes DESC
+    `;
+    
+    return ejecutarQueryConParametros(query, {
+      tiendaId: tiendaId,
+      mesInicio: mesInicio,
+      mesFin: mesFin
+    });
+    
+  } catch (error) {
+    Logger.log('Error en consultarVentasMensuales: ' + error.toString());
+    throw error;
+  }
+}
+
+/**
+ * Consultar ventas mensual acumulado
+ */
+function consultarVentasMensualAcumulado(tiendaId, mes) {
+  try {
+    Logger.log('Consultando mensual acumulado - Tienda: ' + tiendaId + ', Mes: ' + mes);
+    
+    const query = `
+      SELECT 
+        Anio,
+        Mes,
+        Tienda,
+        Fecha_Inicio_Mes,
+        Fecha_Fin_Mes,
+        A,
+        AA,
+        Meta,
+        AA_dif,
+        Meta_dif,
+        A_Acum,
+        AA_Acum,
+        Meta_Acum,
+        AA_dif_Acum,
+        Meta_dif_Acum,
+        Objetivo_Comision,
+        Objetivo_Comision_Acum,
+        Tipo_Comision,
+        Comision,
+        Cumple_Meta,
+        GemasSencilla,
+        GemasDoble,
+        Tipo_Comision_Acum,
+        Comision_Acum,
+        Cumple_Meta_Acum,
+        GemasSencilla_Acum,
+        GemasDoble_Acum
+      FROM \`${PROJECT_ID}.${DATASET}.Ventas_MensualAcumulado_2026\`
+      WHERE Tienda = @tiendaId
+        AND Mes = @mes
+      LIMIT 1
+    `;
+    
+    const resultados = ejecutarQueryConParametros(query, {
+      tiendaId: tiendaId,
+      mes: mes
+    });
+    
+    return resultados.length > 0 ? resultados[0] : null;
+    
+  } catch (error) {
+    Logger.log('Error en consultarVentasMensualAcumulado: ' + error.toString());
+    throw error;
+  }
+}
+
+/**
+ * Obtener lista de todas las tiendas disponibles
+ */
+function obtenerListaTiendas() {
+  const query = `
+    SELECT DISTINCT Tienda
+    FROM \`${PROJECT_ID}.${DATASET}.Ventas_Diario_2026\`
+    ORDER BY Tienda
+  `;
+  
+  try {
     const request = {
       query: query,
       useLegacySql: false,
       timeoutMs: 30000
     };
     
-    const queryResults = BigQuery.Jobs.query(request, 'ivonne-399623');
+    const queryResults = BigQuery.Jobs.query(request, PROJECT_ID);
     
-    if (!queryResults.rows || queryResults.rows.length === 0) {
-      throw new Error('No se encontraron datos para la tienda ' + tiendaId);
-    }
+    if (!queryResults.rows) return [];
     
-    // Convertir a objeto
-    const row = queryResults.rows[0];
-    const result = {};
-    queryResults.schema.fields.forEach((field, index) => {
-      result[field.name] = row.f[index].v;
+    return queryResults.rows.map(row => {
+      return { Tienda: row.f[0].v };
     });
     
-    Logger.log('Datos de ventas para tienda ' + tiendaId + ': ' + JSON.stringify(result));
-    
-    return result;
-    
   } catch (error) {
-    Logger.log('Error en consultarVentasAcumuladas: ' + error.toString());
-    throw error;
+    Logger.log('Error en obtenerListaTiendas: ' + error.toString());
+    return [];
   }
 }
