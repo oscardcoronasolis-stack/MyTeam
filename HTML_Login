@@ -59,6 +59,7 @@
       </div>
     </div>
     
+    
     <!-- PERFIL USUARIO -->
     <div id="userProfile" class="user-profile hidden">
       <img id="userPhoto" src="" class="user-photo" alt="Foto">
