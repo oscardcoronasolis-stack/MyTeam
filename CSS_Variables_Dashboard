@@ -28,6 +28,7 @@
   --glow-purple: 0 0 20px rgba(153, 69, 255, 0.4);
   --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.5);
   
+  
   /* Gradients */
   --gradient-special: linear-gradient(135deg, #14F195 0%, #00D4FF 100%);
   --gradient-normal: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
