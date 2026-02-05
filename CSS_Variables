@@ -1,38 +1,42 @@
 <style>
+  
 /* ============================================
-   VARIABLES CSS - TEMA Y COLORES
+   VARIABLES CSS - PALETA MINIMALISTA GRIS + MORADO
    ============================================ */
 :root {
-  /* Colores Principales */
-  --primary-dark: #2c3e50;
-  --primary-light: #34495e;
-  --accent-red: #e74c3c;
+  /* Fondos - Minimalista */
+  --bg-white: #FFFFFF;
+  --bg-light: #F5F6F8;
+  --bg-mist: #ECEFF3;
   
-  /* Grises */
-  --gray-100: #f8f9fa;
-  --gray-200: #e9ecef;
-  --gray-300: #dee2e6;
-  --gray-400: #ced4da;
-  --gray-500: #adb5bd;
-  --gray-600: #6c757d;
-  --gray-700: #495057;
-  --gray-800: #343a40;
-  --gray-900: #212529;
+  /* Superficies / Tarjetas */
+  --card-bg: #F3F5F9;
+  --card-border: #E2E6ED;
+  --card-shadow: rgba(0, 0, 0, 0.05);
   
-  /* Texto */
-  --text-primary: #333;
-  --text-secondary: #666;
-  --text-muted: #999;
+  /* Morados - Acento Principal */
+  --purple-light: #C9A0DC;
+  --purple-medium: #B07CCF;
+  --purple-dark: #9C6BCF;
   
-  /* Bordes */
-  --border-light: #ddd;
+  /* Texto - TODO GRIS OSCURO (NUNCA BLANCO) */
+  --text-primary: #1a1d21;
+  --text-secondary: #3a3f47;
+  --text-muted: #5a6169;
+  --text-light: #1a1d21;
+  
+  /* Estados */
+  --success: #18C6B8;
+  --warning: #F6B48C;
+  
+  /* Bordes y sombras */
+  --border-light: #E2E6ED;
   --border-radius: 8px;
   --border-radius-lg: 12px;
   
-  /* Sombras */
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-  --shadow-lg: 0 10px 25px rgba(0,0,0,0.3);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.12);
   
   /* Transiciones */
   --transition-fast: 0.2s ease;
