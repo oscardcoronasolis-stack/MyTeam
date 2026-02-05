@@ -15,5 +15,6 @@
       <div id="dashboardUserName" class="user-name">Cargando...</div>
       <div id="dashboardUserDetails" class="user-details">...</div>
     </div>
-  </div>
+  </div> 
+  
 </header>
